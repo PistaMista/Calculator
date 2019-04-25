@@ -6,30 +6,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Calculator</title>
+    <script>
+
+        var operators =
+            [
+                [1, function (a, b) { return a + b }],
+                [1, function (a, b) { return a - b }],
+                [2, function (a, b) { return a * b }],
+                [2, function (a, b) { return a / b }],
+                [3, function (a, b) { return Math.pow(a, b) }]
+            ]
+
+        function GetOperatorInfo(operator) {
+            switch (operator) {
+                case "+": return operators[0];
+                case "-": return operators[1];
+                case "*": return operators[2];
+                case "/": return operators[3];
+                case "^": return operators[4];
+            }
+        }
+
+        var result_expression = new Array();
+        var modified_expression = result_expression;
+
+        var current_precedence_depth = 0;
+
+        function AddToInputDisplay(string) {
+            calculator.input.innerHTML += string;
+            calculator.info.innerHTML = result_expression.toString();
+        }
+
+        function EnterNumber(number) {
+            var output_string;
+
+            if (modified_expression.length != 0 && (typeof modified_expression[modified_expression.length - 1]) == "number") {
+                modified_expression[modified_expression.length - 1] = parseInt(modified_expression[modified_expression.length - 1].toString() + number.toString());
+                AddToInputDisplay(number);
+            }
+            else {
+                modified_expression[modified_expression.length] = parseInt(number);
+                AddToInputDisplay(" " + number);
+            }
+        }
+
+        function EnterOperator(operator) {
+            if (modified_expression.length == 0 || (typeof modified_expression[modified_expression.length - 1]) != "number") return;
+
+            precedence = GetOperatorInfo(operator)[0];
+            difference = precedence - current_precedence_depth;
+
+            current_precedence_depth = precedence;
+
+            for (i = 0; i < difference; i++) BeginExpression();
+            for (i = 0; i > difference; i--) EndExpression();
+
+
+            modified_expression[modified_expression.length] = operator;
+            AddToInputDisplay(" " + operator);
+        }
+
+        function BeginExpression() {
+            modified_expression[modified_expression.length] = new Array();
+            modified_expression = modified_expression[modified_expression.length - 1];
+        }
+
+        function EndExpression() {
+
+        }
+
+        function ExecuteOperation(array) {
+
+
+        }
+
+        function Reset() {
+
+        }
+    </script>
 </head>
 
 <body>
     <form id="calculator">
         <table>
             <tr>
-                <td><input type="button" value="1"></td>
-                <td><input type="button" value="2"></td>
-                <td><input type="button" value="3"></td>
+                <td><input type="button" value="7" onclick="EnterNumber(7)"></td>
+                <td><input type="button" value="8" onclick="EnterNumber(8)"></td>
+                <td><input type="button" value="9" onclick="EnterNumber(9)"></td>
+                <td><input type="button" value="+" onclick="EnterOperator('+')"></td>
 
-                <td rowspan="3" colspan="3">
+
+                <td rowspan="1" colspan="3">
+                    <textarea id="input" readonly></textarea>
+                </td>
+                <td><textarea id="info"></textarea></td>
+            </tr>
+            <tr>
+                <td><input type="button" value="4" onclick="EnterNumber(4)"></td>
+                <td><input type="button" value="5" onclick="EnterNumber(5)"></td>
+                <td><input type="button" value="6" onclick="EnterNumber(6)"></td>
+                <td><input type="button" value="-" onclick="EnterOperator('-')"></td>
+
+
+                <td rowspan="2" colspan="3">
                     <textarea id="output" readonly></textarea>
                 </td>
             </tr>
+
             <tr>
-                <td><input type="button" value="4"></td>
-                <td><input type="button" value="5"></td>
-                <td><input type="button" value="6"></td>
+                <td><input type="button" value="1" onclick="EnterNumber(1)"></td>
+                <td><input type="button" value="2" onclick="EnterNumber(2)"></td>
+                <td><input type="button" value="3" onclick="EnterNumber(3)"></td>
+                <td><input type="button" value="*" onclick="EnterOperator('*')"></td>
             </tr>
 
             <tr>
-                <td><input type="button" value="7"></td>
-                <td><input type="button" value="8"></td>
-                <td><input type="button" value="9"></td>
+                <td><input type="button" value="0" onclick="EnterNumber(0)"></td>
+                <td><input type="button" value="." onclick="EnterNumber(1)"></td>
+
             </tr>
         </table>
 
