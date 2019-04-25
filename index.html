@@ -7,6 +7,16 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Calculator</title>
     <script>
+        function Reset() {
+            result_expression = new Array();
+            modified_expression = result_expression;
+
+            current_precedence_depth = 0;
+            open_brackets = 0;
+
+            calculator.input.innerHTML = "";
+            PrintResultExpression();
+        }
 
         var operators =
             [
@@ -34,36 +44,76 @@
 
         function AddToInputDisplay(string) {
             calculator.input.innerHTML += string;
-            calculator.info.innerHTML = result_expression.toString();
+            PrintResultExpression();
         }
 
-        function EnterNumber(number) {
-            var output_string;
+        function PrintResultExpression() {
+            calculator.info.innerHTML = "Result Expression: \n";
 
+            function PrintExpression(expression, prefix) {
+                for (var i = 0; i < expression.length; i++) {
+                    if (Array.isArray(expression[i])) PrintExpression(expression[i], prefix + "   ");
+                    else calculator.info.innerHTML += prefix + expression[i] + "\n";
+                }
+            }
+
+            PrintExpression(result_expression, "");
+        }
+
+
+        function EnterNumber(number) {
             if (modified_expression.length != 0 && (typeof modified_expression[modified_expression.length - 1]) == "number") {
                 modified_expression[modified_expression.length - 1] = parseInt(modified_expression[modified_expression.length - 1].toString() + number.toString());
                 AddToInputDisplay(number);
             }
-            else {
+            else if (modified_expression.length == 0 || !Array.isArray(modified_expression[modified_expression.length - 1])) {
                 modified_expression[modified_expression.length] = parseInt(number);
                 AddToInputDisplay(" " + number);
             }
         }
 
         function EnterOperator(operator) {
-            if (modified_expression.length == 0 || (typeof modified_expression[modified_expression.length - 1]) != "number") return;
+            var first_operand = modified_expression[modified_expression.length - 1];
+            if (modified_expression.length == 0 || (typeof first_operand) == "string") return;
 
             precedence = GetOperatorInfo(operator)[0];
             difference = precedence - current_precedence_depth;
 
             current_precedence_depth = precedence;
 
+            if (difference > 0) modified_expression.pop();
+
             for (i = 0; i < difference; i++) BeginExpression();
             for (i = 0; i > difference; i--) EndExpression();
+
+            if (difference > 0) modified_expression[modified_expression.length] = first_operand;
 
 
             modified_expression[modified_expression.length] = operator;
             AddToInputDisplay(" " + operator);
+        }
+
+        var open_brackets = 0;
+        function EnterStartBracket() {
+            if (modified_expression.length > 0 && (typeof modified_expression[modified_expression.length - 1]) == "number") return;
+
+            BeginExpression();
+
+            current_precedence_depth = 0;
+
+            open_brackets++;
+            AddToInputDisplay(" (");
+        }
+
+        function EnterEndBracket() {
+            if (open_brackets <= 0) return;
+
+            for (var i = 0; i < current_precedence_depth + 1; i++) EndExpression();
+
+            current_precedence_depth = GetOperatorInfo(modified_expression[modified_expression.length - 2])[0];
+
+            open_brackets--;
+            AddToInputDisplay(" )");
         }
 
         function BeginExpression() {
@@ -72,17 +122,35 @@
         }
 
         function EndExpression() {
+            var target_expression = result_expression;
 
+            while (target_expression[target_expression.length - 1] != modified_expression) {
+                target_expression = target_expression[target_expression.length - 1];
+            }
+
+            modified_expression = target_expression;
         }
 
-        function ExecuteOperation(array) {
+        function Calculate() {
+            function Evaluate(expression) {
+                var result = Array.isArray(expression[0]) ? Evaluate(expression[0]) : expression[0];
+                var operator;
 
+                for (var i = 2; i < expression.length; i += 2) {
+                    operator = expression[i - 1];
+                    var value = Array.isArray(expression[i]) ? Evaluate(expression[i]) : expression[i];
 
+                    result = GetOperatorInfo(operator)[1](result, value);
+                }
+
+                return result;
+            }
+
+            calculator.output.innerHTML += Evaluate(result_expression) + "\n";
+            Reset();
         }
 
-        function Reset() {
 
-        }
     </script>
 </head>
 
@@ -94,18 +162,20 @@
                 <td><input type="button" value="8" onclick="EnterNumber(8)"></td>
                 <td><input type="button" value="9" onclick="EnterNumber(9)"></td>
                 <td><input type="button" value="+" onclick="EnterOperator('+')"></td>
+                <td><input type="button" value="^" onclick="EnterOperator('^')"></td>
 
 
                 <td rowspan="1" colspan="3">
                     <textarea id="input" readonly></textarea>
                 </td>
-                <td><textarea id="info"></textarea></td>
+                <td rowspan="4"><textarea id="info" readonly></textarea></td>
             </tr>
             <tr>
                 <td><input type="button" value="4" onclick="EnterNumber(4)"></td>
                 <td><input type="button" value="5" onclick="EnterNumber(5)"></td>
                 <td><input type="button" value="6" onclick="EnterNumber(6)"></td>
                 <td><input type="button" value="-" onclick="EnterOperator('-')"></td>
+                <td><input type="button" value="AC" onclick="Reset()"></td>
 
 
                 <td rowspan="2" colspan="3">
@@ -118,12 +188,14 @@
                 <td><input type="button" value="2" onclick="EnterNumber(2)"></td>
                 <td><input type="button" value="3" onclick="EnterNumber(3)"></td>
                 <td><input type="button" value="*" onclick="EnterOperator('*')"></td>
+                <td><input type="button" value="=" onclick="Calculate()"></td>
             </tr>
 
             <tr>
                 <td><input type="button" value="0" onclick="EnterNumber(0)"></td>
-                <td><input type="button" value="." onclick="EnterNumber(1)"></td>
-
+                <td><input type="button" value="(" onclick="EnterStartBracket()"></td>
+                <td><input type="button" value=")" onclick="EnterEndBracket()"></td>
+                <td><input type="button" value="/" onclick="EnterOperator('/')"></td>
             </tr>
         </table>
 
